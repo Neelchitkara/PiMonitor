@@ -25,3 +25,4 @@ def get_system_metrics():
 		"disk_usage": psutil.disk_usage("/"). percent,
 		"state": get_state(temperature)
 	}
+

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>PiMonitor</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <div class="dashboard">
+
+        <header>
+            <h1>PiMonitor</h1>
+            <p>Raspberry Pi System Monitoring Dashboard</p>
+        </header>
+
+        <section class="status-panel">
+            <h2>System Status</h2>
+
+            <div id="system-status" class="status">
+                {{ metrics.state }}
+            </div>
+        </section>
+
+        <section class="metrics-grid">
+
+            <div class="metric-card">
+                <h3>CPU Temperature</h3>
+                <p>
+                    <span id="temperature">
+                        {{ "%.1f"|format(metrics.temperature) }}
+                    </span> °C
+                </p>
+            </div>
+
+            <div class="metric-card">
+                <h3>CPU Usage</h3>
+                <p>
+                    <span id="cpu-usage">
+                        {{ metrics.cpu_usage }}
+                    </span>%
+                </p>
+            </div>
+
+            <div class="metric-card">
+                <h3>RAM Usage</h3>
+                <p>
+                    <span id="ram-usage">
+                        {{ metrics.ram_usage }}
+                    </span>%
+                </p>
+            </div>
+
+            <div class="metric-card">
+                <h3>Disk Usage</h3>
+                <p>
+                    <span id="disk-usage">
+                        {{ metrics.disk_usage }}
+                    </span>%
+                </p>
+            </div>
+
+        </section>
+
+        <section class="camera-panel">
+            <h2>Live Camera</h2>
+
+            <img
+                class="camera-feed"
+                src="{{ url_for('video_feed') }}"
+                alt="Live Raspberry Pi Camera Feed"
+            >
+
+        </section>
+
+    </div>
+
+<script>
+
+async function updateMetrics() {
+
+    const response = await fetch("/api/metrics");
+    const metrics = await response.json();
+
+    document.getElementById("temperature").textContent =
+        metrics.temperature.toFixed(1);
+
+    document.getElementById("cpu-usage").textContent =
+        metrics.cpu_usage;
+
+    document.getElementById("ram-usage").textContent =
+        metrics.ram_usage;
+
+    document.getElementById("disk-usage").textContent =
+        metrics.disk_usage;
+
+    const status = document.getElementById("system-status");
+
+    status.textContent = metrics.state;
+
+    status.className = "status " + metrics.state.toLowerCase();
+}
+
+updateMetrics();
+
+setInterval(updateMetrics, 1000);
+
+</script>
+
+</body>
+
+</html>
