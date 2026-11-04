@@ -57,3 +57,5 @@ def generate_frames():
             + annotated_frame
             + b"\r\n"
         )
+def get_motion_status():
+    return motion_detector.get_status()

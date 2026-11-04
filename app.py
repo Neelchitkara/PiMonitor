@@ -1,7 +1,7 @@
 from flask import Flask, render_template, jsonify, Response
 
 from monitor import get_system_metrics
-from camera import generate_frames
+from camera import generate_frames, get_motion_status
 
 app = Flask(__name__)
 
@@ -24,6 +24,9 @@ def video_feed():
         mimetype="multipart/x-mixed-replace; boundary=frame"
     )
 
+@app.route("/api/motion")
+def motion_api():
+    return jsonify(get_motion_status())
 
 if __name__ == "__main__":
     app.run(

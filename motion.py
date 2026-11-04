@@ -1,6 +1,7 @@
+import threading
 import cv2
 import numpy as np
-
+from datetime import datetime, timezone
 
 def prepare_frame(jpeg_bytes):
     encoded_frame = np.frombuffer(jpeg_bytes, dtype=np.uint8)
@@ -28,6 +29,11 @@ class MotionDetector:
         self.minimum_area = minimum_area
         self.pixel_threshold = pixel_threshold
         self.previous_frame = None
+
+        self.status_lock = threading.Lock()
+        self.motion_detected = False
+        self.region_count = 0
+        self.last_motion_at = None
 
     def detect(self, jpeg_bytes):
         colour_frame, current_frame = prepare_frame(jpeg_bytes)
@@ -71,10 +77,19 @@ class MotionDetector:
             motion_regions.append(
                 cv2.boundingRect(contour)
             )
+        with self.status_lock:
+            self.motion_detected = len(motion_regions) > 0
+            self.region_count = len(motion_regions)
+
+            if self.motion_detected:
+                self.last_motion_at = datetime.now(
+                    timezone.utc
+                ).isoformat()
 
         self.previous_frame = current_frame
 
         return colour_frame, motion_regions
+
     def annotate(self, colour_frame, motion_regions):
         motion_detected = len(motion_regions) > 0
 
@@ -115,3 +130,12 @@ class MotionDetector:
             )
 
         return encoded_frame.tobytes()
+
+    def get_status(self):
+        with self.status_lock:
+            return {
+                "motion_detected": self.motion_detected,
+                "region_count": self.region_count,
+                "last_motion_at": self.last_motion_at
+            }
+
