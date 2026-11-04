@@ -5,6 +5,7 @@ from picamera2.outputs import FileOutput
 import io
 import threading
 
+from motion import MotionDetector
 
 class StreamingOutput(io.BufferedIOBase):
     def __init__(self):
@@ -15,6 +16,7 @@ class StreamingOutput(io.BufferedIOBase):
         with self.condition:
             self.frame = bytes(buffer)
             self.condition.notify_all()
+	
 
         return len(buffer)
 
@@ -28,6 +30,7 @@ camera.configure(
 )
 
 output = StreamingOutput()
+motion_detector = MotionDetector()
 
 camera.start_recording(
     JpegEncoder(),
@@ -40,10 +43,17 @@ def generate_frames():
         with output.condition:
             output.condition.wait()
             frame = output.frame
+        
+        colour_frame, motion_regions = motion_detector.detect(frame)
+
+        annotated_frame = motion_detector.annotate(
+            colour_frame,
+            motion_regions
+        )
 
         yield (
             b"--frame\r\n"
             b"Content-Type: image/jpeg\r\n\r\n"
-            + frame
+            + annotated_frame
             + b"\r\n"
         )
